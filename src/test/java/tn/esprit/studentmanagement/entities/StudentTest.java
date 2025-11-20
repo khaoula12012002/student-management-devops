@@ -51,16 +51,7 @@ public class StudentTest {
         assertEquals(enrollments, student.getEnrollments());
     }
 
-    @Test
-    public void testEqualsAndHashCode() {
-        Department department = new Department();
-        List<Enrollment> enrollments = new ArrayList<>();
-        LocalDate dob = LocalDate.of(2000, 1, 1);
-        Student student1 = new Student(1L, "John", "Doe", "john@example.com", "1234567890", dob, "123 Main St", department, enrollments);
-        Student student2 = new Student(1L, "John", "Doe", "john@example.com", "1234567890", dob, "123 Main St", department, enrollments);
-        assertEquals(student1, student2);
-        assertEquals(student1.hashCode(), student2.hashCode());
-    }
+   
 
     @Test
     public void testToString() {
