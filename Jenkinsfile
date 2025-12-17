@@ -2,10 +2,10 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_CREDENTIALS = "dockerhub-cred"  // Ton credential DockerHub existant
+        DOCKERHUB_CREDENTIALS = "dockerhub-cred"  // Ton credential DockerHub
         IMAGE_NAME            = "khoukhaaaaa/student-management"
-        IMAGE_TAG             = "${env.BUILD_NUMBER}"  // Version avec numéro de build
-        APP_PORT              = "8082"  // Port local pour accéder à l'app
+        IMAGE_TAG             = "${env.BUILD_NUMBER}"
+        APP_PORT              = "8082"
     }
 
     tools {
@@ -16,7 +16,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                checkout scm  // Clone directement ton repo configuré dans le job
+                checkout scm
             }
         }
 
@@ -48,19 +48,19 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 withCredentials([string(credentialsId: 'sonar-token-student', variable: 'SONAR_TOKEN')]) {
-                  withSonarQubeEnv('SonarQube Server') {
-                bat '''
-                    mvn sonar:sonar ^
-                        -Dsonar.projectKey=student-management-khaoula ^
-                        -Dsonar.projectName="Student Management - Khaoula" ^
-                        -Dsonar.host.url=http://localhost:9000 ^
-                        -Dsonar.token=%SONAR_TOKEN%
-                '''
+                    withSonarQubeEnv('SonarQube Server') {
+                        bat '''
+                            mvn sonar:sonar ^
+                                -Dsonar.projectKey=student-management-khaoula ^
+                                -Dsonar.projectName="Student Management - Khaoula" ^
+                                -Dsonar.host.url=http://localhost:9000 ^
+                                -Dsonar.token=%SONAR_TOKEN%
+                        '''
+                    }
+                }
+                echo "✅ Analyse SonarQube envoyée avec succès ! Résultat visible dans quelques minutes sur http://localhost:9000"
             }
         }
-        echo "Analyse SonarQube envoyée ! Résultat disponible dans quelques minutes sur http://localhost:9000"
-    }
-}
 
         stage('Package') {
             steps {
@@ -70,7 +70,7 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                bat "docker build -f Dockerfile -t %IMAGE_NAME%:%IMAGE_TAG% ."
+                bat "docker build -t %IMAGE_NAME%:%IMAGE_TAG% ."
                 bat "docker tag %IMAGE_NAME%:%IMAGE_TAG% %IMAGE_NAME%:latest"
             }
         }
@@ -78,7 +78,7 @@ pipeline {
         stage('Push to DockerHub') {
             steps {
                 withCredentials([usernamePassword(
-                    credentialsId: "${DOCKERHUB_CREDENTIALS}",
+                    credentialsId: DOCKERHUB_CREDENTIALS,
                     usernameVariable: 'DOCKER_USER',
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
@@ -92,8 +92,8 @@ pipeline {
         stage('Deploy Locally') {
             steps {
                 bat '''
-                    docker stop student-management || exit 0
-                    docker rm student-management || exit 0
+                    docker stop student-management || echo "Conteneur déjà arrêté"
+                    docker rm student-management || echo "Conteneur déjà supprimé"
                     docker run -d -p %APP_PORT%:8080 --name student-management %IMAGE_NAME%:latest
                 '''
                 echo "🚀 Application déployée ! Accède-la ici : http://localhost:%APP_PORT%"
@@ -102,20 +102,18 @@ pipeline {
 
         stage('Cleanup Old Images') {
             steps {
-                bat '''
-                    docker image prune -f
-                ''' 
+                bat 'docker image prune -f'
             }
         }
     }
 
     post {
         always {
-            echo "Pipeline terminé - Khaoula Ben Slimane "
+            echo "Pipeline terminé - Khaoula Ben Slimane 💪"
         }
         success {
             echo "✅ SUCCÈS TOTAL ! Ton app tourne sur http://localhost:%APP_PORT%"
-            echo " Analyse SonarQube disponible sur http://localhost:9000"
+            echo "🔍 Analyse SonarQube disponible sur http://localhost:9000"
             echo "🐳 Image publiée : https://hub.docker.com/r/khoukhaaaaa/student-management"
         }
         failure {
