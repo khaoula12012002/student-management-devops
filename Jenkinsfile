@@ -4,13 +4,13 @@ pipeline {
         DOCKERHUB_CREDENTIALS = "dockerhub-cred"
         IMAGE_NAME = "khoukhaaaaa/student-management"
         IMAGE_TAG = "${env.BUILD_NUMBER}"
-        APP_PORT = "8082"
-        DOCKER_BUILDKIT = '0'  // Au cas où sur Windows
+        DOCKER_BUILDKIT = '0'
     }
     tools {
         maven 'M3'
         jdk 'JDK17'
     }
+
     stages {
         stage('Checkout') {
             steps {
@@ -34,10 +34,10 @@ pipeline {
                 withCredentials([string(credentialsId: 'sonar-token-student', variable: 'SONAR_TOKEN')]) {
                     bat """
                         mvn sonar:sonar ^
-                            -Dsonar.projectKey=Student-Management-Khaoula ^
-                            -Dsonar.projectName="Student Management - Khaoula" ^
-                            -Dsonar.host.url=http://localhost:9000 ^
-                            -Dsonar.token=%SONAR_TOKEN%
+                        -Dsonar.projectKey=Student-Management-Khaoula ^
+                        -Dsonar.projectName="Student Management - Khaoula" ^
+                        -Dsonar.host.url=http://localhost:9000 ^
+                        -Dsonar.token=%SONAR_TOKEN%
                     """
                 }
             }
@@ -64,34 +64,22 @@ pipeline {
             }
         }
 
-        stage('Deploy Locally') {
+        stage('Deploy to Kubernetes') {
             steps {
-                bat '''
-                    docker stop student-management || echo "Pas de conteneur à arrêter"
-                    docker rm student-management || echo "Pas de conteneur à supprimer"
-                    docker run -d -p %APP_PORT%:8080 --name student-management %IMAGE_NAME%:latest
-                '''
-                echo "🚀 Application déployée sur http://localhost:%APP_PORT%"
-            }
-        }
-
-        stage('Cleanup') {
-            steps {
-                bat 'docker image prune -f'
+                bat """
+                    vagrant upload k8s /tmp/k8s-manifests
+                    vagrant ssh -c "kubectl apply -n devops -f /tmp/k8s-manifests"
+                """
             }
         }
     }
 
     post {
         success {
-            echo "✅ PIPELINE RÉUSSIE ! App → http://localhost:%APP_PORT%"
-            echo "🐳 Image sur https://hub.docker.com/r/khoukhaaaaa/student-management"
+            echo "✅ Déploiement Kubernetes réussi"
         }
         failure {
-            echo "❌ Échec – vérifie les logs"
-        }
-        always {
-            echo "Pipeline terminée – Khaoula Ben Slimane 💪"
+            echo "❌ Échec du pipeline"
         }
     }
 }
