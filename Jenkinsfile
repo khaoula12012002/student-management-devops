@@ -48,17 +48,15 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 withCredentials([string(credentialsId: 'sonar-token-student', variable: 'SONAR_TOKEN')]) {
-                    withSonarQubeEnv('SonarQube Server') {
-                        bat '''
-                            mvn sonar:sonar ^
-                                -Dsonar.projectKey=student-management-khaoula ^
-                                -Dsonar.projectName="Student Management - Khaoula" ^
-                                -Dsonar.host.url=http://localhost:9000 ^
-                                -Dsonar.token=%SONAR_TOKEN%
-                        '''
-                    }
+                    bat '''
+                        mvn sonar:sonar ^
+                            -Dsonar.projectKey=student-management-khaoula ^
+                            -Dsonar.projectName="Student Management - Khaoula" ^
+                            -Dsonar.host.url=http://localhost:9000 ^
+                            -Dsonar.token=%SONAR_TOKEN%
+                    '''
                 }
-                echo "✅ Analyse SonarQube envoyée ! (elle peut prendre du temps à apparaître sur le site)"
+                echo "✅ Analyse SonarQube envoyée avec succès ! Le résultat apparaîtra plus tard sur http://localhost:9000 (pas de blocage)"
             }
         }
 
@@ -92,11 +90,11 @@ pipeline {
         stage('Deploy Locally') {
             steps {
                 bat '''
-                    docker stop student-management || echo "Conteneur déjà arrêté"
-                    docker rm student-management || echo "Conteneur déjà supprimé"
+                    docker stop student-management || echo "Aucun conteneur à arrêter"
+                    docker rm student-management || echo "Aucun conteneur à supprimer"
                     docker run -d -p %APP_PORT%:8080 --name student-management %IMAGE_NAME%:latest
                 '''
-                echo "🚀 Application déployée ! Accède-la ici : http://localhost:%APP_PORT%"
+                echo "🚀 Application déployée ! Ouvre http://localhost:%APP_PORT%"
             }
         }
 
@@ -112,12 +110,12 @@ pipeline {
             echo "Pipeline terminé - Khaoula Ben Slimane 💪"
         }
         success {
-            echo "✅ SUCCÈS TOTAL ! Ton app tourne sur http://localhost:%APP_PORT%"
-            echo "🔍 Analyse SonarQube disponible (ou en cours) sur http://localhost:9000"
-            echo "🐳 Image publiée : https://hub.docker.com/r/khoukhaaaaa/student-management"
+            echo "✅ SUCCÈS TOTAL ! App sur http://localhost:%APP_PORT%"
+            echo "🔍 Analyse SonarQube en cours ou disponible sur http://localhost:9000"
+            echo "🐳 Image sur DockerHub : https://hub.docker.com/r/khoukhaaaaa/student-management"
         }
         failure {
-            echo "❌ Échec du pipeline. Vérifie les logs ci-dessus."
+            echo "❌ Échec. Vérifie les logs."
         }
     }
 }
