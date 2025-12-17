@@ -48,18 +48,19 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 withCredentials([string(credentialsId: 'sonar-token-student', variable: 'SONAR_TOKEN')]) {
-                    withSonarQubeEnv('SonarQube Server') {
-                        bat '''
-                            mvn sonar:sonar ^
-                                -Dsonar.projectKey=student-management-khaoula ^
-                                -Dsonar.projectName="Student Management - Khaoula" ^
-                                -Dsonar.host.url=http://localhost:9000 ^
-                                -Dsonar.token=%SONAR_TOKEN%
-                        '''
-                    }
-                }
+                  withSonarQubeEnv('SonarQube Server') {
+                bat '''
+                    mvn sonar:sonar ^
+                        -Dsonar.projectKey=student-management-khaoula ^
+                        -Dsonar.projectName="Student Management - Khaoula" ^
+                        -Dsonar.host.url=http://localhost:9000 ^
+                        -Dsonar.token=%SONAR_TOKEN%
+                '''
             }
         }
+        echo "Analyse SonarQube envoyée ! Résultat disponible dans quelques minutes sur http://localhost:9000"
+    }
+}
 
         stage('Package') {
             steps {
@@ -110,11 +111,11 @@ pipeline {
 
     post {
         always {
-            echo "Pipeline terminé - Khaoula Ben Slimane 💪"
+            echo "Pipeline terminé - Khaoula Ben Slimane "
         }
         success {
             echo "✅ SUCCÈS TOTAL ! Ton app tourne sur http://localhost:%APP_PORT%"
-            echo "🔍 Analyse SonarQube disponible sur http://localhost:9000"
+            echo " Analyse SonarQube disponible sur http://localhost:9000"
             echo "🐳 Image publiée : https://hub.docker.com/r/khoukhaaaaa/student-management"
         }
         failure {
