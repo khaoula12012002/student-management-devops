@@ -50,7 +50,7 @@ pipeline {
                 withCredentials([string(credentialsId: 'sonar-token-student', variable: 'SONAR_TOKEN')]) {
                     bat '''
                         mvn sonar:sonar ^
-                            -Dsonar.projectKey=student-management-khaoula ^
+                            -Dsonar.projectKey=Student-Management-Khaoula ^
                             -Dsonar.projectName="Student Management - Khaoula" ^
                             -Dsonar.host.url=http://localhost:9000 ^
                             -Dsonar.token=%SONAR_TOKEN%
