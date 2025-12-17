@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_CREDENTIALS = "dockerhub-cred"  // Ton credential DockerHub
+        DOCKERHUB_CREDENTIALS = "dockerhub-cred"
         IMAGE_NAME            = "khoukhaaaaa/student-management"
         IMAGE_TAG             = "${env.BUILD_NUMBER}"
         APP_PORT              = "8082"
@@ -58,7 +58,7 @@ pipeline {
                         '''
                     }
                 }
-                echo "✅ Analyse SonarQube envoyée avec succès ! Résultat visible dans quelques minutes sur http://localhost:9000"
+                echo "✅ Analyse SonarQube envoyée ! (elle peut prendre du temps à apparaître sur le site)"
             }
         }
 
@@ -113,7 +113,7 @@ pipeline {
         }
         success {
             echo "✅ SUCCÈS TOTAL ! Ton app tourne sur http://localhost:%APP_PORT%"
-            echo "🔍 Analyse SonarQube disponible sur http://localhost:9000"
+            echo "🔍 Analyse SonarQube disponible (ou en cours) sur http://localhost:9000"
             echo "🐳 Image publiée : https://hub.docker.com/r/khoukhaaaaa/student-management"
         }
         failure {
