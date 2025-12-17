@@ -5,6 +5,7 @@ pipeline {
         IMAGE_NAME = "khoukhaaaaa/student-management"
         IMAGE_TAG = "${env.BUILD_NUMBER}"
         APP_PORT = "8082"
+        DOCKER_BUILDKIT = '0'  // Au cas où sur Windows
     }
     tools {
         maven 'M3'
@@ -16,7 +17,7 @@ pipeline {
                 checkout scm
             }
         }
-        
+
         stage('Unit Tests') {
             steps {
                 bat 'mvn test'
@@ -27,7 +28,7 @@ pipeline {
                 }
             }
         }
-        
+
         stage('SonarQube Analysis') {
             steps {
                 withCredentials([string(credentialsId: 'sonar-token-student', variable: 'SONAR_TOKEN')]) {
@@ -39,30 +40,16 @@ pipeline {
                             -Dsonar.token=%SONAR_TOKEN%
                     """
                 }
-                echo "✅ Analyse SonarQube envoyée avec succès ! Résultat sur http://localhost:9000"
             }
         }
-        
-        stage('Package') {
-            steps {
-                bat 'mvn clean package -DskipTests'
-            }
-        }
-        
-        stage('Verify Docker') {
-            steps {
-                bat 'docker version || echo "Docker non disponible ! Vérifie Docker Desktop sur Windows."'
-                bat 'docker info || echo "Docker daemon ne répond pas."'
-            }
-        }
-        
+
         stage('Build Docker Image') {
             steps {
                 bat "docker build -t %IMAGE_NAME%:%IMAGE_TAG% ."
                 bat "docker tag %IMAGE_NAME%:%IMAGE_TAG% %IMAGE_NAME%:latest"
             }
         }
-        
+
         stage('Push to DockerHub') {
             steps {
                 withCredentials([usernamePassword(
@@ -76,36 +63,35 @@ pipeline {
                 }
             }
         }
-        
+
         stage('Deploy Locally') {
             steps {
                 bat '''
-                    docker stop student-management || echo "Aucun conteneur à arrêter"
-                    docker rm student-management || echo "Aucun conteneur à supprimer"
+                    docker stop student-management || echo "Pas de conteneur à arrêter"
+                    docker rm student-management || echo "Pas de conteneur à supprimer"
                     docker run -d -p %APP_PORT%:8080 --name student-management %IMAGE_NAME%:latest
                 '''
-                echo "🚀 Application déployée ! Accès : http://localhost:%APP_PORT%"
+                echo "🚀 Application déployée sur http://localhost:%APP_PORT%"
             }
         }
-        
-        stage('Cleanup Old Images') {
+
+        stage('Cleanup') {
             steps {
                 bat 'docker image prune -f'
             }
         }
     }
-    
+
     post {
-        always {
-            echo "Pipeline terminé - Khaoula Ben Slimane 💪"
-        }
         success {
-            echo "✅ SUCCÈS ! App sur http://localhost:%APP_PORT%"
-            echo "🔍 SonarQube : http://localhost:9000"
-            echo "🐳 DockerHub : https://hub.docker.com/r/khoukhaaaaa/student-management"
+            echo "✅ PIPELINE RÉUSSIE ! App → http://localhost:%APP_PORT%"
+            echo "🐳 Image sur https://hub.docker.com/r/khoukhaaaaa/student-management"
         }
         failure {
-            echo "❌ Échec de la pipeline. Vérifie les logs, surtout Docker."
+            echo "❌ Échec – vérifie les logs"
+        }
+        always {
+            echo "Pipeline terminée – Khaoula Ben Slimane 💪"
         }
     }
 }
